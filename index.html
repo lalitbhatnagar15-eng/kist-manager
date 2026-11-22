@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b65">
+<title>Kist Manager</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:#eef3f9;font-family:Arial,sans-serif;color:#172b45}
+.container{max-width:480px;margin:auto}
+header{background:#123b65;color:white;padding:23px;border-radius:18px}
+header h2{margin:0 0 7px}
+.card{background:white;padding:18px;border-radius:15px;margin-top:15px;box-shadow:0 3px 12px #0001}
+label{display:block;margin-top:12px;font-size:14px}
+input{width:100%;padding:13px;margin-top:7px;border:1px solid #ccd5df;border-radius:9px;font-size:16px}
+button{width:100%;padding:14px;border:0;border-radius:9px;background:#087bce;color:white;font-size:16px;margin-top:14px}
+.amount{font-size:29px;font-weight:bold;color:#087bce;margin:8px 0}
+.muted{color:#65758a;font-size:13px}
+.history{padding:12px 0;border-bottom:1px solid #eee}
+.green{color:#13834b;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h2>💰 Kist Manager</h2>
+<div>अपनी किस्तों का हिसाब, आसान तरीके से</div>
+</header>
+
+<div class="card">
+<h3>लोन की जानकारी</h3>
+<label>कुल बाकी रकम (₹)</label>
+<input id="total" type="number" min="0" value="50000">
+<label>महीने की निर्धारित किस्त (₹)</label>
+<input id="monthly" type="number" min="1" value="2000">
+<button onclick="settings()">जानकारी सेव करें</button>
+</div>
+
+<div class="card">
+<div class="muted">आपकी बाकी रकम</div>
+<div class="amount" id="balance">₹50,000</div>
+<div>मासिक किस्त: <b id="monthlyShow">₹2,000</b></div>
+<p>अनुमानित महीने बाकी: <b id="months">25</b></p>
+</div>
+
+<div class="card">
+<h3>किस्त जमा करें</h3>
+<label>इस बार कितने रुपये जमा किए?</label>
+<input id="payment" type="number" min="1" value="2000">
+<button onclick="pay()">पेमेंट दर्ज करें</button>
+<p class="muted">आप ₹2,000 की जगह ₹5,000 या अपनी पसंद की रकम डाल सकते हैं।</p>
+</div>
+
+<div class="card">
+<h3>पेमेंट हिस्ट्री</h3>
+<div id="history">अभी कोई पेमेंट नहीं है।</div>
+</div>
+</div>
+
+<script>
+let data=JSON.parse(localStorage.getItem("kistData"))||{
+ total:50000,monthly:2000,balance:50000,history:[]
+};
+
+const money=n=>"₹"+n.toLocaleString("en-IN");
+
+function save(){
+ localStorage.setItem("kistData",JSON.stringify(data));
+}
+
+function render(){
+ document.getElementById("total").value=data.total;
+ document.getElementById("monthly").value=data.monthly;
+ document.getElementById("balance").textContent=money(data.balance);
+ document.getElementById("monthlyShow").textContent=money(data.monthly);
+ document.getElementById("months").textContent=
+ data.balance===0?"पूरी हो गई":Math.ceil(data.balance/data.monthly);
+
+ document.getElementById("history").innerHTML=
+ data.history.length?data.history.map(p=>
+ `<div class="history"><span class="green">+ ${money(p.amount)}</span><br><small>${p.date}</small></div>`
+ ).join(""):"अभी कोई पेमेंट नहीं है।";
+}
+
+function settings(){
+ let t=Number(document.getElementById("total").value);
+ let m=Number(document.getElementById("monthly").value);
+ if(!Number.isFinite(t)||t<0||!Number.isFinite(m)||m<=0){
+ alert("सही रकम डालें");return;
+ }
+ if(data.history.length===0)data.balance=t;
+ data.total=t;data.monthly=m;
+ save();render();alert("जानकारी सेव हो गई");
+}
+
+function pay(){
+ let a=Number(document.getElementById("payment").value);
+ if(!Number.isFinite(a)||a<=0){alert("सही रकम डालें");return}
+ if(data.balance<=0){alert("लोन पूरा हो चुका है");return}
+ if(a>data.balance){alert("रकम बाकी बैलेंस से ज्यादा है");return}
+ if(!confirm(money(a)+" की पेमेंट दर्ज करें?"))return;
+
+ data.balance-=a;
+ data.history.unshift({
+ amount:a,date:new Date().toLocaleString("hi-IN")
+ });
+ save();render();
+ alert("पेमेंट दर्ज हो गई!");
+}
+
+render();
+</script>
+</body>
+</html>
